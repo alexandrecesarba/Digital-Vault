@@ -157,9 +157,9 @@ VALUES (
   'Administrador',
   'admin@inf1416.puc-rio.br',
   1,  -- <=== substitua pelo gid retornado acima
-  '$2y$08$3FJ4jZG4owBeA/xubR3L8.TVsAuf5yxdugLoDFEmQ.3KxcFXwCObS',
+  '$2y$08$Hlf7uRLbPWydlvOcU1w6P.6PuYGe67.auipDO6DIZ0G.jxlrdKh8C',
   X'D703C733AE2FDC981CB973E1084F31AA9BF7330543BC847F4663B2330D47BBC7',
-  NULL  -- <=== vamos preencher o kid só depois
+  1  -- <=== vamos preencher o kid só depois
 );
 
 SELECT uid FROM Usuarios WHERE email='admin@inf1416.puc-rio.br';

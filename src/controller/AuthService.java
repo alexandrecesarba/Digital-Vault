@@ -109,4 +109,18 @@ public class AuthService {
     public User getCurrentUser() {
         return currentUser;
     }
+
+    public int getPwdErrorCount() {
+        return this.pwdErrorCount;
+      }
+
+      public void incrementaPwdError() {
+        pwdErrorCount++;
+        if (pwdErrorCount >= 3) {
+            blockedUntil = System.currentTimeMillis() + lockDurationMs;
+            stage = Stage.LOGIN;
+        }
+    }
+    
+      
 }

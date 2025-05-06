@@ -17,6 +17,7 @@ import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import main.java.util.Node;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 
 public class Auth {
@@ -137,4 +138,31 @@ public class Auth {
             cipher.init(Cipher.ENCRYPT_MODE, keySpec);
             return cipher.doFinal(privateKeyBytes);
         }
+
+        /**
+     * Varre a árvore de escolhas e testa cada caminho
+     * @param root árvore construída pelo PasswordView
+     * @param userHash o hash bcrypt da senha real
+     */
+    public static boolean verificaArvoreSenha(Node root, String userHash) {
+        return dfsVerify(root, "", userHash);
+    }
+
+    private static boolean dfsVerify(Node node, String prefix, String userHash) {
+        if (node == null) return false;
+        String novo = prefix + node.val;
+        // se for folha (sem filhos) então testamos:
+        if (node.esq == null && node.dir == null) {
+            // compara a senha em texto puro com o hash
+            if (OpenBSDBCrypt.checkPassword(userHash, novo.toCharArray())) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        // senão continua descendo em ambos
+        if (dfsVerify(node.esq, novo, userHash)) return true;
+        if (dfsVerify(node.dir, novo, userHash)) return true;
+        return false;
+    }
 }

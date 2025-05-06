@@ -114,30 +114,33 @@ public class DBManager {
      */
     public User findUserByEmail(String email) throws SQLException {
         String sql =
-          "SELECT uid, senha_hash, totp_key_encrypted, blocked " +
-          "  FROM Usuarios " +
-          " WHERE email = ?";
+          "SELECT uid, nome, email, senha_hash, totp_key_encrypted, kid, blocked\n"+
+          "  FROM Usuarios WHERE email = ?";
         try (Connection c = connect();
              PreparedStatement p = c.prepareStatement(sql)) {
-    
-            p.setString(1, email);
-            try (ResultSet rs = p.executeQuery()) {
-                if (!rs.next()) return null;
-                int    uid           = rs.getInt("uid");
-                String hash          = rs.getString("senha_hash");
-                byte[] encTotp       = rs.getBytes("totp_key_encrypted");
-                boolean frozen       = rs.getBoolean("blocked");
-                final String totpSecret;
-                try {
-                    totpSecret = Auth.decryptTOTPKey(encTotp);
-                } catch (Exception ex) {
-                    throw new SQLException("Falha ao descriptografar TOTP key", ex);
-                }
-
-                return new User(uid, email, hash, totpSecret, frozen);
+          p.setString(1, email);
+          try (ResultSet rs = p.executeQuery()) {
+            if (!rs.next()) return null;
+            int    uid        = rs.getInt("uid");
+            String nome       = rs.getString("nome");
+            String hash       = rs.getString("senha_hash");
+            byte[] encTotp    = rs.getBytes("totp_key_encrypted");
+            boolean frozen    = rs.getInt("blocked")==1;
+            String totpSecret;
+            try {
+              totpSecret = Auth.decryptTOTPKey(encTotp);
+            } catch (Exception ex) {
+              throw new SQLException("Falha ao decriptar TOTP key", ex);
             }
+            User u = new User(email, hash, totpSecret, frozen);
+            u.setUid(uid);
+            u.setNome(nome);
+            u.setChaveiroId(rs.getInt("kid"));
+            return u;
+          }
         }
     }
+    
     
     
 

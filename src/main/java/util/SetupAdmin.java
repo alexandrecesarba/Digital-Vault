@@ -21,7 +21,7 @@ public class SetupAdmin {
     static final String NOME_ADMIN     = "Administrador";
     static final String EMAIL_ADMIN    = "admin@inf1416.puc-rio.br";
     static final String GRUPO_ADMIN    = "administrador";
-    static final String SENHA_ADMIN    = "admin";       // escolha a senha
+    static final String SENHA_ADMIN    = "89234012";       // escolha a senha
     static final String TOTP_BASE32    = "JBSWY3DPEHPK3PXP";      // seu segredo Base32
 
     // caminhos para os seus arquivos PEM/KEY (PKCS#8)  

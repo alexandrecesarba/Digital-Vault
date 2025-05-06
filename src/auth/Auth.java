@@ -16,7 +16,7 @@ import totp.TOTP;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
-
+import java.nio.charset.StandardCharsets;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 
 public class Auth {
@@ -121,4 +121,20 @@ public class Auth {
         // 4) converte de volta para String (Base32 em UTF-8)
         return new String(plain, StandardCharsets.UTF_8);
     }
+
+        // criptografa o segredo TOTP (String Base32) → byte[]
+        public static byte[] encryptTotpKey(String base32Secret) throws Exception {
+            SecretKeySpec keySpec = new SecretKeySpec(APP_MASTER_KEY, "AES");
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
+            return cipher.doFinal(base32Secret.getBytes(StandardCharsets.UTF_8));
+        }
+
+        // criptografa o conteúdo da sua chave privada (PKCS#8 bytes) → byte[]
+        public static byte[] encryptPrivateKey(byte[] privateKeyBytes) throws Exception {
+            SecretKeySpec keySpec = new SecretKeySpec(APP_MASTER_KEY, "AES");
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
+            return cipher.doFinal(privateKeyBytes);
+        }
 }

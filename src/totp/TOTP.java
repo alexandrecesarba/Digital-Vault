@@ -1,9 +1,9 @@
 package totp;
-
+import totp.Base32;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Date;
-import org.apache.commons.codec.binary.Base32;
+
 
 public class TOTP {
     private byte[] key = null;
@@ -16,11 +16,10 @@ public class TOTP {
      */
     public TOTP(String base32EncodedSecret, long timeStepInSeconds) throws Exception {
         this.timeStepInSeconds = timeStepInSeconds;
-        Base32 codec = new Base32();
-        key = codec.decode(base32EncodedSecret);
-        if (key == null || key.length == 0) {
-            throw new Exception("Chave Base32 inválida");
-        }
+        Base32 b32 = new Base32(Base32.Alphabet.BASE32, false, false);
+        this.key = b32.fromString(base32EncodedSecret);
+        if (this.key == null)
+          throw new IllegalArgumentException("Chave Base32 inválida");
     }
 
     /**

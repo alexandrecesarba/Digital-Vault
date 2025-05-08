@@ -4,13 +4,14 @@ import model.User;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
+import main.java.util.Node;
 
 import auth.Auth;
 import db.DBManager;
 
 
 public class AuthService {
-    private final DBManager db;         // seu DAO
+    private final DBManager db;         
     private final long lockDurationMs = 2 * 60_000;
 
     public enum Stage { LOGIN, PASSWORD, TOTP }
@@ -54,28 +55,22 @@ public class AuthService {
     }
 
     // ETAPA 2: senha via teclado virtual
-    public boolean submitPassword(List<Integer> inputs) {
+    public boolean submitPassword(Node root) {
         if (stage != Stage.PASSWORD) throw new IllegalStateException();
-
-        // converte inputs em string, ex: [1,5,3,2,0] → "15320"
-        boolean ok = Auth.authenticateVirtualKeyboard(
-                        inputs,
-                        currentUser.getPasswordHash());
-
+        boolean ok = Auth.verificaArvoreSenha(root, currentUser.getPasswordHash());
         if (ok) {
-            stage = Stage.TOTP;
-            pwdErrorCount = 0;
-            return true;
+          pwdErrorCount = 0;
+          stage = Stage.TOTP;
         } else {
-            pwdErrorCount++;
-            if (pwdErrorCount >= 3) {
-                // bloqueia e volta pra etapa 1
-                blockedUntil = System.currentTimeMillis() + lockDurationMs;
-                stage = Stage.LOGIN;
-            }
-            return false;
+          pwdErrorCount++;
+          if (pwdErrorCount >= 3) {
+            blockedUntil = System.currentTimeMillis() + lockDurationMs;
+            stage = Stage.LOGIN;
+          }
         }
-    }
+        return ok;
+      }
+      
 
     // ETAPA 3: TOTP
     public boolean submitTOTP(String code) {
@@ -105,7 +100,6 @@ public class AuthService {
         return stage;
     }
 
-    /** recupera quem foi autenticado na última submitLogin() */
     public User getCurrentUser() {
         return currentUser;
     }
@@ -120,6 +114,10 @@ public class AuthService {
             blockedUntil = System.currentTimeMillis() + lockDurationMs;
             stage = Stage.LOGIN;
         }
+    }
+
+    public int getTOTPErrorCount() {
+        return this.totpErrorCount;
     }
     
       

@@ -21,12 +21,12 @@ public class SetupAdmin {
     static final String NOME_ADMIN     = "Administrador";
     static final String EMAIL_ADMIN    = "admin@inf1416.puc-rio.br";
     static final String GRUPO_ADMIN    = "administrador";
-    static final String SENHA_ADMIN    = "89234012";       // escolha a senha
-    static final String TOTP_BASE32    = "JBSWY3DPEHPK3PXP";      // seu segredo Base32
+    static final String SENHA_ADMIN    = "89234012";           // escolha a senha
+    static final String TOTP_BASE32    = "JBSWY3DPEHPK3PXP";   // seu segredo Base32
 
     // caminhos para os seus arquivos PEM/KEY (PKCS#8)  
-    static final Path CERT_PATH        = Paths.get("Pacote-T4/Keys/admin-x509.crt");
-    static final Path PRIVKEY_PATH     = Paths.get("Pacote-T4/Keys/admin-pkcs8-aes.key");
+    static final Path CERT_PATH     = Paths.get("Pacote-T4/Keys/admin-x509.crt");
+    static final Path PRIVKEY_PATH  = Paths.get("Pacote-T4/Keys/admin-pkcs8-aes.key");
     // ——————————————————————————
 
     public static void main(String[] args) throws Exception {
@@ -36,9 +36,14 @@ public class SetupAdmin {
         // 2) Criptografa o TOTP Base32
         byte[] encTotp = Auth.encryptTotpKey(TOTP_BASE32);
 
+        // **--------------  TESTE TOTP LOCAL --------------**
+        String currentTotpCode = Auth.generateTOTP(TOTP_BASE32);
+        System.out.println("=== CÓDIGO TOTP ATUAL ===  " + currentTotpCode);
+        // **------------------------------------------------**
+
         // 3) Lê e prepara o PEM do certificado
         String certPem = new String(Files.readAllBytes(CERT_PATH), StandardCharsets.UTF_8)
-                            .replace("'", "''");  // escape simples para SQL
+                            .replace("'", "''");  
 
         // 4) Criptografa a chave privada raw (PKCS#8 bytes)
         byte[] rawPriv = Files.readAllBytes(PRIVKEY_PATH);
@@ -95,3 +100,6 @@ public class SetupAdmin {
         return sb.toString();
     }
 }
+
+
+

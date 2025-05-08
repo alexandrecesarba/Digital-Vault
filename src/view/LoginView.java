@@ -10,18 +10,15 @@ import java.util.Date;
 public class LoginView extends JFrame {
     private final AuthService authService;
     private final DBManager db;          // para gravar log
-    private final Runnable onLoginSuccess;
 
     private JTextField emailField;
     private JButton    okButton;
     private JButton    clearButton;
 
     public LoginView(AuthService authService,
-                     DBManager db,
-                     Runnable onLoginSuccess) {
+                     DBManager db) {
         this.authService     = authService;
         this.db              = db;
-        this.onLoginSuccess  = onLoginSuccess;
         initComponents();
 
         // **Antes** de exibir a tela, registra o início da Etapa 1 (2001)
@@ -83,7 +80,9 @@ public class LoginView extends JFrame {
         // 2) Tenta login
     boolean ok;
     try {
+        System.out.println("[LoginView] stage antes do submitLogin: " + authService.getStage());
         ok = authService.submitLogin(email);
+        System.out.println("[LoginView] submitLogin retornou: " + ok + ", stage agora: " + authService.getStage());
     } catch (RuntimeException ex) {
         // conta bloqueada → MID=2004
         JOptionPane.showMessageDialog(this,
@@ -108,12 +107,12 @@ public class LoginView extends JFrame {
     int uid = authService.getCurrentUser().getUid();
     try {
         db.insertRegistro(2003, uid, null);
+        dispose();
+        new PasswordView(authService, db);
     } catch (SQLException e) {
         e.printStackTrace();
     }
 
-    // 5) Avança para próxima etapa
-    dispose();
-    onLoginSuccess.run();
+
     }
 }

@@ -278,7 +278,7 @@ public class DBManager {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // Aqui você pode adicionar outros métodos públicos conforme necessidade:
+    //  adicionar outros métodos públicos conforme necessidade:
     //     • atualizar senha (`UPDATE Usuarios SET senha_hash = ? WHERE uid = ?`)
     //     • carregar/atualizar TOTP key, etc.
     // ──────────────────────────────────────────────────────────────────────────

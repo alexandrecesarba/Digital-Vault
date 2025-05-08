@@ -15,7 +15,6 @@ import main.java.util.Node;
 public class PasswordView extends JFrame {
     private final AuthService authService;
     private final DBManager   db;
-    private final Runnable    onTotp;      // callback para abrir a etapa 3
 
     private JTextField            pwdField;
     private List<JButton>         btns;
@@ -27,10 +26,9 @@ public class PasswordView extends JFrame {
   
     private final List<Integer> clicks = new ArrayList<>();
 
-    public PasswordView(AuthService authService, DBManager db, Runnable onTotp) {
+    public PasswordView(AuthService authService, DBManager db) {
         this.authService = authService;
         this.db          = db;
-        this.onTotp      = onTotp;
 
         initUI();
         logStart();
@@ -157,8 +155,11 @@ public class PasswordView extends JFrame {
         }
     
         // chama o serviço
-        boolean ok = Auth.verificaArvoreSenha(root, authService.getCurrentUser().getPasswordHash());
-    
+        System.out.println("[PasswordView] stage antes do submitPassword: " + authService.getStage());
+        System.out.println("[PasswordView] clicks até agora: " + clicks);
+        boolean ok = authService.submitPassword(root);
+        System.out.println("[PasswordView] submitPassword(root) retornou " + ok 
+                           + ", stage agora=" + authService.getStage());
         // registra fim do passo 2
         try {
           db.insertRegistro(3002, uid, null);
@@ -167,7 +168,7 @@ public class PasswordView extends JFrame {
         if (ok) {
             try{db.insertRegistro(3003, uid, null);} catch(SQLException ex){;}
             dispose();
-            onTotp.run();
+            new TOTPView(authService, db);
         } else {
             int errors = authService.getPwdErrorCount()+1;
             authService.incrementaPwdError(); // implemente um método que só incrementa o contador interno
@@ -187,7 +188,7 @@ public class PasswordView extends JFrame {
               JOptionPane.WARNING_MESSAGE
             );
             dispose();
-            new LoginView(authService, db, onTotp);
+            new LoginView(authService, db);
           } else {
             JOptionPane.showMessageDialog(
               this,
@@ -218,4 +219,6 @@ public class PasswordView extends JFrame {
           ex.printStackTrace();
         }
     }
+
+    
 }

@@ -23,7 +23,7 @@ import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
 public class Auth {
 
     private static final byte[] APP_MASTER_KEY = 
-    "0123456789ABCDEF0123456789ABCDEF".getBytes(StandardCharsets.UTF_8);
+        "0123456789ABCDEF0123456789ABCDEF".getBytes(StandardCharsets.UTF_8);
 
     // 1. HASH DE SENHA: Bcrypt 2y custo=8 via BouncyCastle
     public static String hashPassword(String plainPassword) throws Exception {
@@ -123,23 +123,23 @@ public class Auth {
         return new String(plain, StandardCharsets.UTF_8);
     }
 
-        // criptografa o segredo TOTP (String Base32) → byte[]
-        public static byte[] encryptTotpKey(String base32Secret) throws Exception {
-            SecretKeySpec keySpec = new SecretKeySpec(APP_MASTER_KEY, "AES");
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
-            return cipher.doFinal(base32Secret.getBytes(StandardCharsets.UTF_8));
-        }
+    // criptografa o segredo TOTP (String Base32) → byte[]
+    public static byte[] encryptTotpKey(String base32Secret) throws Exception {
+        SecretKeySpec keySpec = new SecretKeySpec(APP_MASTER_KEY, "AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, keySpec);
+        return cipher.doFinal(base32Secret.getBytes(StandardCharsets.UTF_8));
+    }
 
-        // criptografa o conteúdo da sua chave privada (PKCS#8 bytes) → byte[]
-        public static byte[] encryptPrivateKey(byte[] privateKeyBytes) throws Exception {
-            SecretKeySpec keySpec = new SecretKeySpec(APP_MASTER_KEY, "AES");
-            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec);
-            return cipher.doFinal(privateKeyBytes);
-        }
+    // criptografa o conteúdo da sua chave privada (PKCS#8 bytes) → byte[]
+    public static byte[] encryptPrivateKey(byte[] privateKeyBytes) throws Exception {
+        SecretKeySpec keySpec = new SecretKeySpec(APP_MASTER_KEY, "AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, keySpec);
+        return cipher.doFinal(privateKeyBytes);
+    }
 
-        /**
+    /**
      * Varre a árvore de escolhas e testa cada caminho
      * @param root árvore construída pelo PasswordView
      * @param userHash o hash bcrypt da senha real

@@ -14,6 +14,13 @@ import model.User;
 import auth.Auth;
 import java.sql.Types;
 import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Scanner;
+import java.util.Arrays;
 
 public class DBManager {
     private static final String DB_URL = "jdbc:sqlite:cofre.db";
@@ -107,39 +114,100 @@ public class DBManager {
         // ──────────────────────────────────────────────────────────────────────────
     // Métodos públicos
     // ──────────────────────────────────────────────────────────────────────────
+    /**
+     * Retorna o numero de usuarios cadastrados no sistema.
+     */
+    public int countUsers() throws SQLException {
+        String sql = "SELECT COUNT(*) AS cnt FROM Usuarios";
+        try (Connection c = connect();
+             PreparedStatement p = c.prepareStatement(sql);
+             ResultSet rs = p.executeQuery()) {
+            if (rs.next()) return rs.getInt("cnt");
+            else           return 0;
+        }
+    }
 
+    /**
+     * Inicializa o banco de dados se for a primeira vez logando.
+     */
+    public void initIfNeeded() throws SQLException {
+        boolean hasUsers;
+        try {
+            hasUsers = countUsers() > 0;
+        } catch (SQLException e) {
+            // Se não existe a tabela Usuarios, consideramos que precisamos inicializar
+            hasUsers = false;
+        }
+        if (hasUsers) return;
+    
+        // ----------------------------------------------------------------------------
+        // roda script de criação do banco
+        // ----------------------------------------------------------------------------
+        try (InputStream in = getClass().getResourceAsStream("/db/initDB.sql");
+             Scanner sc = new Scanner(in, StandardCharsets.UTF_8)) {
+            sc.useDelimiter(";");
+            try (Connection c = connect();
+                 Statement stmt = c.createStatement()) {
+                while (sc.hasNext()) {
+                    String sql = sc.next().trim();
+                    if (!sql.isEmpty()) {
+                        stmt.execute(sql);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new SQLException("Falha ao ler script de criação do banco", e);
+        }
+    }
+    
+    
     
     /**
      * Busca um usuário por e-mail. Retorna null se não existir.
      */
     public User findUserByEmail(String email) throws SQLException {
-        String sql =
-          "SELECT uid, nome, email, senha_hash, totp_key_encrypted, kid, blocked\n"+
-          "  FROM Usuarios WHERE email = ?";
+        String sql = """
+          SELECT uid,nome,email,senha_hash,totp_key_encrypted,kid,blocked
+            FROM Usuarios WHERE email = ?
+        """;
         try (Connection c = connect();
              PreparedStatement p = c.prepareStatement(sql)) {
-          p.setString(1, email);
-          try (ResultSet rs = p.executeQuery()) {
-            if (!rs.next()) return null;
-            int    uid        = rs.getInt("uid");
-            String nome       = rs.getString("nome");
-            String hash       = rs.getString("senha_hash");
-            byte[] encTotp    = rs.getBytes("totp_key_encrypted");
-            boolean frozen    = rs.getInt("blocked")==1;
-            String totpSecret;
-            try {
-              totpSecret = Auth.decryptTOTPKey(encTotp);
-            } catch (Exception ex) {
-              throw new SQLException("Falha ao decriptar TOTP key", ex);
+            p.setString(1, email);
+            try (ResultSet rs = p.executeQuery()) {
+                if (!rs.next()) return null;
+                int    uid    = rs.getInt("uid");
+                String nome   = rs.getString("nome");
+                String hash   = rs.getString("senha_hash");
+                byte[] encTotp= rs.getBytes("totp_key_encrypted");
+                boolean frozen= rs.getInt("blocked")==1;
+    
+                User u = new User(uid, nome, email, hash, null, frozen);
+                u.setEncryptedTotp(encTotp);
+                u.setChaveiroId(rs.getInt("kid"));
+                return u;
             }
-            User u = new User(email, hash, totpSecret, frozen);
-            u.setUid(uid);
-            u.setNome(nome);
-            u.setChaveiroId(rs.getInt("kid"));
-            return u;
-          }
         }
     }
+    
+
+    // em db/DBManager.java, dentro da classe DBManager:
+    public byte[] getEncryptedTotpByEmail(String email) throws SQLException {
+        String sql = "SELECT totp_key_encrypted FROM Usuarios WHERE email = ?";
+        try (Connection c = connect();
+            PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, email);
+            try (ResultSet rs = p.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBytes("totp_key_encrypted");
+                } else {
+                    return null;
+                }
+            }
+        }
+    }
+
+    
+    
     
     
     

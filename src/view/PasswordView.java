@@ -2,6 +2,7 @@ package view;
 
 import controller.AuthService;
 import db.DBManager;
+import main.java.util.Node;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,8 +10,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import auth.Auth;
-import main.java.util.Node;
 
 public class PasswordView extends JFrame {
     private final AuthService authService;
@@ -23,13 +22,11 @@ public class PasswordView extends JFrame {
     private static final int MAX_LEN = 10;
 
     private Node root = new Node("");    // raiz da árvore de dígitos
-  
     private final List<Integer> clicks = new ArrayList<>();
 
     public PasswordView(AuthService authService, DBManager db) {
         this.authService = authService;
         this.db          = db;
-
         initUI();
         logStart();
     }
@@ -54,7 +51,7 @@ public class PasswordView extends JFrame {
         // 2) gera as 5 opções iniciais
         regenerateOptions();
 
-        // 3) botões
+        // 3) botões das opções
         btns = new ArrayList<>(5);
         for(int i=0; i<5; i++){
             JButton b = new JButton(labelFor(optionsList.get(i)));
@@ -75,7 +72,6 @@ public class PasswordView extends JFrame {
             clicks.clear();
             pwdField.setText("");
         });
-
         gbc.gridy=4; gbc.gridx=3; gbc.gridwidth=1;
         panel.add(ok,    gbc);
         gbc.gridx=4;
@@ -93,7 +89,6 @@ public class PasswordView extends JFrame {
         Random rnd = new Random();
         for(int i=0; i<5; i++){
             List<Integer> pair = new ArrayList<>(2);
-            // escolhe duas posições distintas
             for(int j=0; j<2; j++){
                 int pos = rnd.nextInt(digits.length());
                 pair.add(digits.charAt(pos) - '0');
@@ -109,116 +104,102 @@ public class PasswordView extends JFrame {
 
     private void insereNosFolhas(Node node, List<Integer> par) {
         if (node.esq==null && node.dir==null) {
-          // se está numa folha, crie dois ramos
-          node.esq = new Node(par.get(0).toString());
-          node.dir = new Node(par.get(1).toString());
+            node.esq = new Node(par.get(0).toString());
+            node.dir = new Node(par.get(1).toString());
         } else {
-          // caso contrário, propaga para todos os ramos
-          insereNosFolhas(node.esq, par);
-          insereNosFolhas(node.dir, par);
+            insereNosFolhas(node.esq, par);
+            insereNosFolhas(node.dir, par);
         }
-      }
-      
+    }
 
     private void onOptionClicked(int idx) {
-        // 1) trava no máximo de dígitos
-        if (clicks.size() >= MAX_LEN * 2) {
-          return;
-        }
+        // bloqueia se exceder
+        if (clicks.size() >= MAX_LEN * 2) return;
 
         insereNosFolhas(root, optionsList.get(idx));
-      
-    
-        // 2) guarda os dois dígitos da opção — a verificação tentará as 2 possibilidades
         clicks.addAll(optionsList.get(idx));
         pwdField.setText(pwdField.getText() + "●");
-    
-        // 3) embaralha de novo
+
         regenerateOptions();
         for (int i = 0; i < btns.size(); i++) {
-          btns.get(i).setText(labelFor(optionsList.get(i)));
+            btns.get(i).setText(labelFor(optionsList.get(i)));
         }
-      }
+    }
 
-      private void onOk() {
+    private void onOk() {
         int uid = authService.getCurrentUser().getUid();
         int len = clicks.size();
-        // comprimento válido?
         if (len < MIN_LEN * 2 || len > MAX_LEN * 2) {
-          JOptionPane.showMessageDialog(
-            this,
-            "A senha pessoal deve ter entre 8 e 10 números.",
-            "Erro de autenticação",
-            JOptionPane.ERROR_MESSAGE
-          );
-          return;
+            JOptionPane.showMessageDialog(
+                this,
+                "A senha pessoal deve ter entre 8 e 10 números.",
+                "Erro de autenticação",
+                JOptionPane.ERROR_MESSAGE
+            );
+            return;
         }
-    
-        // chama o serviço
-        System.out.println("[PasswordView] stage antes do submitPassword: " + authService.getStage());
-        System.out.println("[PasswordView] clicks até agora: " + clicks);
+
+        // *** CONSTRUÇÃO DO TEXTO PURO DA SENHA ***
+        StringBuilder sb = new StringBuilder();
+        for (int d : clicks) sb.append(d);
+        String plainPassword = sb.toString();
+        System.out.println("[PasswordView] Senha em texto: " + plainPassword);
+
+        // chama o serviço com os dois argumentos antigos → novo:
         boolean ok = authService.submitPassword(root);
-        System.out.println("[PasswordView] submitPassword(root) retornou " + ok 
+        System.out.println("[PasswordView] submitPassword → " + ok
                            + ", stage agora=" + authService.getStage());
-        // registra fim do passo 2
-        try {
-          db.insertRegistro(3002, uid, null);
-        } catch (SQLException ex) { ex.printStackTrace(); }
-    
+
+        // log fim do passo 2
+        try { db.insertRegistro(3002, uid, null); } catch(SQLException ex){}
+
         if (ok) {
-            try{db.insertRegistro(3003, uid, null);} catch(SQLException ex){;}
+            try{ db.insertRegistro(3003, uid, null); } catch(SQLException ex){}
             dispose();
             new TOTPView(authService, db);
         } else {
-            int errors = authService.getPwdErrorCount()+1;
-            authService.incrementaPwdError(); // implemente um método que só incrementa o contador interno
+            authService.incrementaPwdError();
+            int errors = authService.getPwdErrorCount();
             int mid = switch(errors) {
                 case 1 -> 3005;
                 case 2 -> 3006;
                 case 3 -> 3007;
                 default -> 3004;
             };
-          try { db.insertRegistro(mid, uid, null); } catch(SQLException ex){;}
-    
-          if (errors >= 3) {
-            JOptionPane.showMessageDialog(
-              this,
-              "Número máximo de tentativas atingido. Aguarde 2 minutos.",
-              "Autenticação falhou",
-              JOptionPane.WARNING_MESSAGE
-            );
-            dispose();
-            new LoginView(authService, db);
-          } else {
-            JOptionPane.showMessageDialog(
-              this,
-              "Senha incorreta. Tente novamente.",
-              "Erro de autenticação",
-              JOptionPane.ERROR_MESSAGE
-            );
-            // limpa tudo para tentar de novo:
-            resetInput();
-          }
-        }
-      }
+            try { db.insertRegistro(mid, uid, null); } catch(SQLException ex){}
 
-      private void resetInput() {
+            if (errors >= 3) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Número máximo de tentativas atingido. Aguarde 2 minutos.",
+                    "Autenticação falhou",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                dispose();
+                new LoginView(authService, db);
+            } else {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Senha incorreta. Tente novamente.",
+                    "Erro de autenticação",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                resetInput();
+            }
+        }
+    }
+
+    private void resetInput() {
         clicks.clear();
         pwdField.setText("");
         regenerateOptions();
         for (int i = 0; i < btns.size(); i++) {
-          btns.get(i).setText(labelFor(optionsList.get(i)));
-        }
-      }
-
-    private void logStart() {
-        int uid = authService.getCurrentUser().getUid();
-        try {
-          db.insertRegistro(3001, uid, null);
-        } catch (SQLException ex) {
-          ex.printStackTrace();
+            btns.get(i).setText(labelFor(optionsList.get(i)));
         }
     }
 
-    
+    private void logStart() {
+        int uid = authService.getCurrentUser().getUid();
+        try { db.insertRegistro(3001, uid, null); } catch (SQLException ex) { ex.printStackTrace(); }
+    }
 }

@@ -2,93 +2,62 @@ package model;
 
 /**
  * Representa o usuário carregado do banco, com as propriedades
- * necessárias para autenticação.
+ * necessárias para as várias fases de autenticação.
  */
 public class User {
-    private int     uid;           // já tem
-    private String  nome;          // novo
+    private int     uid;
+    private String  nome;
     private String  email;
     private String  passwordHash;
-    private String  totpSecret;
+    private byte[] encryptedTotp;    // novo
+    private String  totpSecret;        // ← permanece para, depois, armazenar o Base32
     private boolean frozen;
-    private int     chaveiroId;    // novo
+    private int     chaveiroId;
 
-    /**
-     * @param uid           ID interno do usuário (campo uid em Usuarios)
-     * @param nome          nome completo do usuário
-     * @param email         e-mail (login name)
-     * @param passwordHash  hash Bcrypt da senha pessoal
-     * @param totpSecret    chave secreta TOTP em Base32
-     * @param frozen        true se o usuário estiver bloqueado
-     */
+    /** Novo construtor completo */
     public User(int uid,
                 String nome,
                 String email,
                 String passwordHash,
-                String totpSecret,
+                byte[] encryptedTotpKey,
                 boolean frozen) {
-        this.uid           = uid;
-        this.nome          = nome;
-        this.email         = email;
-        this.passwordHash  = passwordHash;
-        this.totpSecret    = totpSecret;
-        this.frozen        = frozen;
+        this.uid               = uid;
+        this.nome              = nome;
+        this.email             = email;
+        this.passwordHash      = passwordHash;
+        this.encryptedTotp  = encryptedTotpKey;
+        this.frozen            = frozen;
     }
 
-        /**
-     * Este é o _constructor_ de compatibilidade que o DBManager
-     * ainda usa, para não ter que alterar todo mundo.
-     */
+    /** Construtor de compatibilidade (usado hoje pelo DBManager) */
     public User(String email,
                 String passwordHash,
                 String totpSecret,
                 boolean frozen) {
-        // passamos valores “placeholder” para os campos que só
-        // serão preenchidos depois, se necessário.
-        this(0, null, email, passwordHash, totpSecret, frozen);
+        this(0, null, email, passwordHash, null, frozen);
+        this.totpSecret = totpSecret;
     }
 
-    // --- UID ---
-    public int getUid() {
-        return uid;
-    }
-    public void setUid(int uid) {
-        this.uid = uid;
-    }
+    
+    public int getUid() { return uid; }
+    public void setUid(int uid) { this.uid = uid; }
 
-    // --- Nome ---
-    public String getNome() {
-        return nome;
-    }
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
 
-    // --- Email ---
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email; }
 
-    // --- Password hash ---
-    public String getPasswordHash() {
-        return passwordHash;
-    }
+    public String getPasswordHash() { return passwordHash; }
 
-    // --- TOTP secret ---
-    public String getTotpSecret() {
-        return totpSecret;
-    }
+    public String getTotpSecret() { return totpSecret; }
+    public void setTotpSecret(String totpSecret) { this.totpSecret = totpSecret; }
 
-    // --- Frozen/block flag ---
-    public boolean isFrozen() {
-        return frozen;
-    }
+    public byte[] getEncryptedTotp() { return encryptedTotp; }
+    public void setEncryptedTotp(byte[] encryptedTotp) { this.encryptedTotp = encryptedTotp; }
 
-    // --- Chaveiro ID ---
-    public int getChaveiroId() {
-        return chaveiroId;
-    }
-    public void setChaveiroId(int chaveiroId) {
-        this.chaveiroId = chaveiroId;
-    }
+
+    public boolean isFrozen() { return frozen; }
+
+    public int getChaveiroId() { return chaveiroId; }
+    public void setChaveiroId(int chaveiroId) { this.chaveiroId = chaveiroId; }
 }

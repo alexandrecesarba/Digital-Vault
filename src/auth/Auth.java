@@ -1,5 +1,6 @@
 package auth;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -8,17 +9,25 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.Signature;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
 import totp.TOTP;
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
 import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import main.java.util.Node;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
+import javax.crypto.EncryptedPrivateKeyInfo;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.util.Base64;
+import javax.crypto.KeyGenerator;
+import java.security.NoSuchAlgorithmException;
+
 
 public class Auth {
 
@@ -39,32 +48,51 @@ public class Auth {
     }
 
     // 2. LEITURA DE CERTIFICADO X.509
-    public static X509Certificate readCertificate(byte[] certBytes) throws Exception {
-        try (InputStream in = new ByteArrayInputStream(certBytes)) {
-            return (X509Certificate) CertificateFactory
-                    .getInstance("X.509")
-                    .generateCertificate(in);
+    public static X509Certificate readCertificate(byte[] bytes) throws CertificateException, IOException {
+        String text = new String(bytes, StandardCharsets.UTF_8);
+        int b = text.indexOf("-----BEGIN CERTIFICATE-----");
+        int e = text.indexOf("-----END CERTIFICATE-----");
+        if (b >= 0 && e > b) {
+            text = text.substring(b, e + "-----END CERTIFICATE-----".length());
+        }
+        try (ByteArrayInputStream in = new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8))) {
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            return (X509Certificate)cf.generateCertificate(in);
         }
     }
+    
+    // 3. CARREGAMENTO E DECRIPTOGRAFIA DA CHAVE PRIVADA (AES-256/ECB/PKCS5Padding)
+    public static PrivateKey loadPrivateKey(String passphrase, Path keyPath) throws Exception {
+        // 1) Deriva chave AES-256 a partir da passphrase
+        SecureRandom prng = SecureRandom.getInstance("SHA1PRNG", "SUN"); // Especificar o provider para consistência
+        prng.setSeed(passphrase.getBytes(StandardCharsets.UTF_8));
 
-    // 3. CARREGAMENTO E D E C R I P T O G R A F I A  DA CHAVE PRIVADA (AES-256/ECB/PKCS5Padding)
-    public static PrivateKey loadPrivateKey(String secretPhrase, Path keyFile)
-            throws Exception {
-        // deriva chave AES-256 a partir da frase secreta
-        SecureRandom rand = SecureRandom.getInstance("SHA1PRNG");
-        rand.setSeed(secretPhrase.getBytes(StandardCharsets.UTF_8));
         KeyGenerator kg = KeyGenerator.getInstance("AES");
-        kg.init(256, rand);
-        SecretKeySpec aesKey = new SecretKeySpec(kg.generateKey().getEncoded(), "AES");
+        kg.init(256, prng); // Tamanho da chave AES-256
+        SecretKey aesKey = kg.generateKey();
+        SecretKeySpec secretKeySpec = new SecretKeySpec(aesKey.getEncoded(), "AES");
 
-        // decripta o arquivo
+        // 2) Prepara cipher AES/ECB/PKCS5Padding para decriptografia
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, aesKey);
-        byte[] encrypted = Files.readAllBytes(keyFile);
-        byte[] decrypted = cipher.doFinal(encrypted);
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);
 
-        // reconstrói PrivateKey (PKCS#8)
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(decrypted);
+        // 3) Lê bytes do arquivo .key e aplica decriptografia AES
+        // O resultado esperado é o conteúdo PEM da chave como bytes
+        byte[] encryptedFileBytes = Files.readAllBytes(keyPath);
+        byte[] decryptedPemBytes = cipher.doFinal(encryptedFileBytes);
+
+        // 4) Converte os bytes decriptografados para uma string PEM
+        //    e remove os delimitadores PEM e todos os espaços em branco/quebras de linha.
+        String pemContent = new String(decryptedPemBytes, StandardCharsets.UTF_8)
+            .replaceAll("-----BEGIN PRIVATE KEY-----", "")
+            .replaceAll("-----END PRIVATE KEY-----", "")
+            .replaceAll("\\s+", ""); // Remove todos os caracteres de espaço em branco (espaços, tabs, newlines etc.)
+
+        // 5) Decodifica o conteúdo Base64 da string PEM para obter os bytes DER PKCS#8
+        byte[] pkcs8DerBytes = Base64.getDecoder().decode(pemContent);
+
+        // 6) Constrói a PrivateKey RSA a partir dos bytes DER PKCS#8
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(pkcs8DerBytes);
         return KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
 
@@ -108,28 +136,35 @@ public class Auth {
         return authenticatePassword(sb.toString(), storedHash);
     }
 
-    public static String decryptTOTPKey(byte[] encryptedKey) throws Exception {
-        // 1) monta o SecretKeySpec com a chave mestra
-        SecretKeySpec keySpec = new SecretKeySpec(APP_MASTER_KEY, "AES");
-
-        // 2) inicializa o Cipher em modo DECRYPT com AES/ECB/PKCS5Padding
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, keySpec);
-
-        // 3) faz a descriptografia
-        byte[] plain = cipher.doFinal(encryptedKey);
-
-        // 4) converte de volta para String (Base32 em UTF-8)
+    public static byte[] encryptTOTPKey(String base32Secret, String userPassword) throws Exception {
+        // 1) derivar key AES-256 a partir da senha:
+        SecureRandom prng = SecureRandom.getInstance("SHA1PRNG");
+        prng.setSeed(userPassword.getBytes(StandardCharsets.UTF_8));
+        KeyGenerator kg = KeyGenerator.getInstance("AES");
+        kg.init(256, prng);
+        SecretKey aesKey = kg.generateKey();
+    
+        // 2) criptografar o Base32:
+        Cipher c = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        c.init(Cipher.ENCRYPT_MODE, aesKey);
+        return c.doFinal(base32Secret.getBytes(StandardCharsets.UTF_8));
+    }
+    
+    public static String decryptTOTPKey(byte[] encryptedTotp, String userPassword) throws Exception {
+        // 1) deriva a MESMA key AES-256 a partir da senha:
+        SecureRandom prng = SecureRandom.getInstance("SHA1PRNG");
+        prng.setSeed(userPassword.getBytes(StandardCharsets.UTF_8));
+        KeyGenerator kg = KeyGenerator.getInstance("AES");
+        kg.init(256, prng);
+        SecretKey aesKey = kg.generateKey();
+    
+        // 2) descriptografa:
+        Cipher c = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        c.init(Cipher.DECRYPT_MODE, aesKey);
+        byte[] plain = c.doFinal(encryptedTotp);
         return new String(plain, StandardCharsets.UTF_8);
     }
-
-    // criptografa o segredo TOTP (String Base32) → byte[]
-    public static byte[] encryptTotpKey(String base32Secret) throws Exception {
-        SecretKeySpec keySpec = new SecretKeySpec(APP_MASTER_KEY, "AES");
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, keySpec);
-        return cipher.doFinal(base32Secret.getBytes(StandardCharsets.UTF_8));
-    }
+    
 
     // criptografa o conteúdo da sua chave privada (PKCS#8 bytes) → byte[]
     public static byte[] encryptPrivateKey(byte[] privateKeyBytes) throws Exception {
@@ -148,6 +183,8 @@ public class Auth {
         return dfsVerify(root, "", userHash);
     }
 
+
+
     private static boolean dfsVerify(Node node, String prefix, String userHash) {
         if (node == null) return false;
         String novo = prefix + node.val;
@@ -164,5 +201,22 @@ public class Auth {
         if (dfsVerify(node.esq, novo, userHash)) return true;
         if (dfsVerify(node.dir, novo, userHash)) return true;
         return false;
+    }
+
+    public static String recoverPassword(Node root, String userHash) {
+        return dfsRecover(root, "", userHash);
+    }
+    private static String dfsRecover(Node node, String prefix, String userHash) {
+        if (node == null) return null;
+        String candidate = prefix + node.val;
+        if (node.esq == null && node.dir == null) {
+            if (OpenBSDBCrypt.checkPassword(userHash, candidate.toCharArray()))
+                return candidate;
+            else
+                return null;
+        }
+        String left = dfsRecover(node.esq, candidate, userHash);
+        if (left != null) return left;
+        return dfsRecover(node.dir, candidate, userHash);
     }
 }

@@ -17,7 +17,7 @@ public class TesteSenhaAdmin {
         String hash = admin.getPasswordHash();  
 
         // 3) tenta uma senha qualquer (a que você configurou em SetupAdmin, ex "89234012")
-        String tentativa = "89234012";
+        String tentativa = "12345678";
 
         // 4) chama o método de verificação de bcrypt
         boolean ok = Auth.authenticatePassword(tentativa, hash);

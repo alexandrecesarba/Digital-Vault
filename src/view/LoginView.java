@@ -112,7 +112,5 @@ public class LoginView extends JFrame {
     } catch (SQLException e) {
         e.printStackTrace();
     }
-
-
     }
 }

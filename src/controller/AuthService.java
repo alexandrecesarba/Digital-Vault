@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import main.java.util.Node;
+import java.security.PrivateKey;
 
 import auth.Auth;
 import db.DBManager;
@@ -16,9 +17,13 @@ public class AuthService {
 
     public enum Stage { LOGIN, PASSWORD, TOTP }
 
+    // Armazena em memória a chave privada do administrador
+    private PrivateKey adminPrivateKey;
+
     // Estado corrente de cada sessão de login
     private Stage stage = Stage.LOGIN;
     private User  currentUser;
+    private String currentPassword;
     private int   pwdErrorCount = 0;
     private int   totpErrorCount = 0;
     private long  blockedUntil = 0;
@@ -29,69 +34,54 @@ public class AuthService {
 
     // ETAPA 1: login name
     public boolean submitLogin(String email) {
-        if (System.currentTimeMillis() < blockedUntil) {
+        if (System.currentTimeMillis() < blockedUntil)
             throw new RuntimeException("Conta bloqueada até " + new Date(blockedUntil));
-        }
-        
-        User u;
         try {
-            u = db.findUserByEmail(email);
-        } catch (SQLException e) {
+            User u = db.findUserByEmail(email);
+            if (u==null || u.isFrozen()) return false;
+            this.currentUser = u;
+            this.stage = Stage.PASSWORD;
+            return true;
+        } catch(SQLException e) {
             e.printStackTrace();
             return false;
         }
-        
-        if (u == null) {
-            // avisa “E-mail inválido”
-            return false;
-        }
-        if (u.isFrozen()) {
-            // avisa “Usuário bloqueado”
-            return false;
-        }
-        this.currentUser = u;
-        this.stage = Stage.PASSWORD;
-        return true;
     }
 
-    // ETAPA 2: senha via teclado virtual
+    /* Etapa 2: árvore de teclado virtual. */
     public boolean submitPassword(Node root) {
         if (stage != Stage.PASSWORD) throw new IllegalStateException();
         boolean ok = Auth.verificaArvoreSenha(root, currentUser.getPasswordHash());
         if (ok) {
-          pwdErrorCount = 0;
-          stage = Stage.TOTP;
+            this.currentPassword = Auth.recoverPassword(root, currentUser.getPasswordHash());
+            pwdErrorCount = 0;
+            stage = Stage.TOTP;
         } else {
-          pwdErrorCount++;
-          if (pwdErrorCount >= 3) {
-            blockedUntil = System.currentTimeMillis() + lockDurationMs;
-            stage = Stage.LOGIN;
-          }
+            if (++pwdErrorCount >= 3) {
+                blockedUntil = System.currentTimeMillis() + 2*60_000;
+                this.stage = Stage.LOGIN;
+            }
         }
         return ok;
-      }
-      
+    }
 
-    // ETAPA 3: TOTP
+    /** Etapa 3: agora decripta e valida o TOTP */
     public boolean submitTOTP(String code) {
         if (stage != Stage.TOTP) throw new IllegalStateException();
-
-        boolean ok;
+        String secret;
         try {
-            ok = Auth.validateTOTP(currentUser.getTotpSecret(), code);
+            // pega o encryptedTotp que veio do banco (veja DBManager)
+            byte[] encTotp = currentUser.getEncryptedTotp();
+            secret = Auth.decryptTOTPKey(encTotp, currentPassword);
         } catch (Exception e) {
-            ok = false;
+            return false;
         }
-
-        if (ok) {
-            // autenticação completa!
-            return true;
-        } else {
-            totpErrorCount++;
-            if (totpErrorCount >= 3) {
-                blockedUntil = System.currentTimeMillis() + lockDurationMs;
-                stage = Stage.LOGIN;
-            }
+        try {
+            boolean ok = Auth.validateTOTP(secret, code);
+            if (ok) return true;
+            // contagem de erros...
+            return false;
+        } catch (Exception e) {
             return false;
         }
     }
@@ -119,6 +109,12 @@ public class AuthService {
     public int getTOTPErrorCount() {
         return this.totpErrorCount;
     }
+
+        /** Define a chave privada do administrador (cadastro inicial). */
+        public void setAdminPrivateKey(PrivateKey key) {
+            this.adminPrivateKey = key;
+        }
+    
     
       
 }

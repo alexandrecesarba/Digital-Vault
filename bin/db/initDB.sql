@@ -102,7 +102,6 @@ INSERT INTO Mensagens VALUES(5001, 'Tela principal apresentada para <login_name>
 INSERT INTO Mensagens VALUES(5002, 'Opção 1 do menu principal selecionada por <login_name>.');
 INSERT INTO Mensagens VALUES(5003, 'Opção 2 do menu principal selecionada por <login_name>.');
 INSERT INTO Mensagens VALUES(5004, 'Opção 3 do menu principal selecionada por <login_name>.');
-INSERT INTO Mensagens VALUES(5005, 'Opção 4 do menu principal selecionada por <login_name>.');
 
 -- Cadastro de usuário
 INSERT INTO Mensagens VALUES(6001, 'Tela de cadastro apresentada para <login_name>.');

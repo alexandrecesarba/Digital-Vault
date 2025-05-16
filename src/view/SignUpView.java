@@ -142,7 +142,7 @@ public class SignUpView extends JFrame {
         // Grupo
         gbc.gridx=0; gbc.gridy=y; gbc.gridwidth=1; gbc.weightx=0;
         formPanel.add(new JLabel("Grupo:"), gbc);
-        groupCombo = new JComboBox<>(new String[]{"administrador"});
+        groupCombo = new JComboBox<>(new String[]{"Administrador"});
         gbc.gridx=1; gbc.gridy=y; gbc.gridwidth=2; gbc.weightx=1.0;
         formPanel.add(groupCombo, gbc);
         y++;
@@ -234,7 +234,7 @@ public class SignUpView extends JFrame {
                 JOptionPane.showMessageDialog(this,
                     "Chave privada ou frase inválida.",
                     "Erro no .key", JOptionPane.ERROR_MESSAGE);
-                db.insertRegistro(6007, null, null);
+                db.insertRegistro(6007, null, null);    // registro errado?
                 return;
             }
             authService.setAdminPrivateKey(priv);
@@ -242,7 +242,7 @@ public class SignUpView extends JFrame {
             JOptionPane.showMessageDialog(this,
                 "Erro ao carregar/verificar chave: " + ex.getMessage(),
                 "Erro no .key", JOptionPane.ERROR_MESSAGE);
-            try { db.insertRegistro(6006, null, null); } catch(SQLException ex2){}
+            try { db.insertRegistro(6006, null, null); } catch(SQLException ex2){}  // registro errado?
             return;
         }
 
@@ -295,7 +295,7 @@ public class SignUpView extends JFrame {
                 p.executeUpdate();
             }
 
-            db.insertRegistro(6008, uid, null);
+            db.insertRegistro(6008, uid, null); // registro errado?
 
             // 6) mostra QR Code
             showTOTPSetupQR(nome, email, base32);

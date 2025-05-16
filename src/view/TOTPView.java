@@ -2,10 +2,9 @@ package view;
 
 import controller.AuthService;
 import db.DBManager;
-
-import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
+import javax.swing.*;
 
 public class TOTPView extends JFrame {
     private final AuthService authService;
@@ -93,6 +92,8 @@ public class TOTPView extends JFrame {
                 JOptionPane.showMessageDialog(
                     null, "Autenticação completa!", 
                     "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+                // inicia tela principal do Cofre
+                new MainView(authService, db);
             } else {
                 // 3b) erro: contabiliza e verifica bloqueio
                 int errs = authService.getTOTPErrorCount();

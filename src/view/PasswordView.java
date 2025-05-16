@@ -2,14 +2,13 @@ package view;
 
 import controller.AuthService;
 import db.DBManager;
-import main.java.util.Node;
-
-import javax.swing.*;
 import java.awt.*;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import javax.swing.*;
+import main.java.util.Node;
 
 public class PasswordView extends JFrame {
     private final AuthService authService;

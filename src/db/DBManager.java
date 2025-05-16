@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
 import java.util.Arrays;
+import javax.print.attribute.standard.MediaSize;
 
 public class DBManager {
     private static final String DB_URL = "jdbc:sqlite:cofre.db";
@@ -343,6 +344,51 @@ public class DBManager {
             }
             return lista;
         }
+    }
+
+    /**
+     * Retorna o grupo do usuário com o UID.
+     * @param uid     usuário envolvido (pode ser null)
+     */
+    public String getUserGroup(int uid) throws SQLException {
+        String sql = """
+            SELECT g.nome 
+            FROM Grupos g, Usuarios u
+            WHERE g.gid = u.gid AND u.uid = ?
+        """;
+
+        try (Connection c = connect();
+             PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, uid);
+            try (ResultSet rs = p.executeQuery()) {
+                if (rs.next()) return rs.getString("nome");
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Retorna o número de acessos do usuário com o UID.
+     * @param uid     usuário envolvido (pode ser null)
+     */
+    public int getUserAcessNum(int uid) throws SQLException {
+        String sql = """
+            SELECT COUNT(r.rid) AS num_rids
+            FROM Registros r
+            WHERE r.uid = ? AND r.mid = 4003
+        """;
+
+        try (Connection c = connect();
+             PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, uid);
+            try (ResultSet rs = p.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("num_rids");
+                }
+            }
+        }
+
+        return 0;
     }
 
     // ──────────────────────────────────────────────────────────────────────────

@@ -149,7 +149,7 @@ public class MainView extends  JFrame {
         // Grava log de saída (5004)
         try { db.insertRegistro(5004, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
         dispose();
-        System.exit(0);
+        new ExitView(authService, db);
     }
 
     

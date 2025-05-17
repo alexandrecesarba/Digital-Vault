@@ -82,11 +82,11 @@ INSERT INTO Mensagens VALUES(2005, 'Login name <login_name> não identificado.')
 INSERT INTO Mensagens VALUES(3001, 'Autenticação etapa 2 iniciada para <login_name>.');
 INSERT INTO Mensagens VALUES(3002, 'Autenticação etapa 2 encerrada para <login_name>.');
 INSERT INTO Mensagens VALUES(3003, 'Senha pessoal verificada positivamente para <login_name>.');
-INSERT INTO Mensagens VALUES(3004, 'Senha pessoal verificada negativamente para <login_name>.');
-INSERT INTO Mensagens VALUES(3005, 'Primeiro erro da senha pessoal contabilizado para <login_name>.');
-INSERT INTO Mensagens VALUES(3006, 'Segundo erro da senha pessoal contabilizado para <login_name>.');
-INSERT INTO Mensagens VALUES(3007, 'Terceiro erro da senha pessoal contabilizado para <login_name>.');
-INSERT INTO Mensagens VALUES(3008, 'Acesso do usuario <login_name> bloqueado pela autenticação etapa 2.');
+-- INSERT INTO Mensagens VALUES(3004, 'Senha pessoal verificada negativamente para <login_name>.');
+INSERT INTO Mensagens VALUES(3004, 'Primeiro erro da senha pessoal contabilizado para <login_name>.');
+INSERT INTO Mensagens VALUES(3005, 'Segundo erro da senha pessoal contabilizado para <login_name>.');
+INSERT INTO Mensagens VALUES(3006, 'Terceiro erro da senha pessoal contabilizado para <login_name>.');
+INSERT INTO Mensagens VALUES(3007, 'Acesso do usuario <login_name> bloqueado pela autenticação etapa 2.');
 
 -- Etapa 3 – TOTP
 INSERT INTO Mensagens VALUES(4001, 'Autenticação etapa 3 iniciada para <login_name>.');
@@ -115,28 +115,26 @@ INSERT INTO Mensagens VALUES(6008, 'Confirmação de dados aceita por <login_nam
 INSERT INTO Mensagens VALUES(6009, 'Confirmação de dados rejeitada por <login_name>.');
 INSERT INTO Mensagens VALUES(6010, 'Botão voltar de cadastro para o menu principal pressionado por <login_name>.');
 
--- Carregamento da chave privada
-INSERT INTO Mensagens VALUES(7001, 'Tela de carregamento da chave privada apresentada para <login_name>.');
-INSERT INTO Mensagens VALUES(7002, 'Caminho da chave privada inválido fornecido por <login_name>.');
-INSERT INTO Mensagens VALUES(7003, 'Frase secreta inválida fornecida por <login_name>.');
-INSERT INTO Mensagens VALUES(7004, 'Erro de validação da chave privada com o certificado digital de <login_name>.');
-INSERT INTO Mensagens VALUES(7005, 'Chave privada validada com sucesso para <login_name>.');
-INSERT INTO Mensagens VALUES(7006, 'Botão voltar de carregamento para o menu principal pressionado por <login_name>.');
-
 -- Consulta de arquivos secretos
-INSERT INTO Mensagens VALUES(8001, 'Tela de consulta de arquivos secretos apresentada para <login_name>.');
-INSERT INTO Mensagens VALUES(8002, 'Botão voltar de consulta para o menu principal pressionado por <login_name>.');
-INSERT INTO Mensagens VALUES(8003, 'Botão Listar de consulta pressionado por <login_name>.');
-INSERT INTO Mensagens VALUES(8004, 'Caminho de pasta inválido fornecido por <login_name>.');
-INSERT INTO Mensagens VALUES(8005, 'Lista de arquivos apresentada para <login_name>.');
-INSERT INTO Mensagens VALUES(8006, 'Arquivo <arq_name> selecionado por <login_name> para decriptação.');
-INSERT INTO Mensagens VALUES(8007, 'Arquivo <arq_name> verificado (integridade e autenticidade) com sucesso para <login_name>.');
-INSERT INTO Mensagens VALUES(8008, 'Falha na decriptação do arquivo <arq_name> para <login_name>.');
-INSERT INTO Mensagens VALUES(8009, 'Falha na verificação de integridade e autenticidade do arquivo <arq_name> para <login_name>.');
+INSERT INTO Mensagens VALUES(7001, 'Tela de consulta de arquivos secretos apresentada para <login_name>.');
+INSERT INTO Mensagens VALUES(7002, 'Botão voltar de consulta para o menu principal pressionado por <login_name>.');
+INSERT INTO Mensagens VALUES(7003, 'Botão Listar de consulta pressionado por <login_name>.');
+INSERT INTO Mensagens VALUES(7004, 'Caminho de pasta inválido fornecido por <login_name>.');
+INSERT INTO Mensagens VALUES(7005, 'Arquivo de índice decriptado com sucesso para <login_name>.');
+INSERT INTO Mensagens VALUES(7006, 'Arquivo de índice verificado (integridade e autenticidade) com sucesso para <login_name>.');
+INSERT INTO Mensagens VALUES(7007, 'Falha na decriptação do arquivo de índice para <login_name>.');
+INSERT INTO Mensagens VALUES(7008, 'Falha na verificação (integridade e autenticidade) do arquivo de índice para <login_name>.');
+INSERT INTO Mensagens VALUES(7009, 'Lista de arquivos presentes no índice apresentada para <login_name>.');
+INSERT INTO Mensagens VALUES(7010, 'Arquivo <arq_name> selecionado por <login_name> para decriptação.');
+INSERT INTO Mensagens VALUES(7011, 'Acesso permitido ao arquivo <arq_name> para <login_name>.');
+INSERT INTO Mensagens VALUES(7012, 'Acesso negado ao arquivo <arq_name> para <login_name>.');
+INSERT INTO Mensagens VALUES(7013, 'Arquivo <arq_name> decriptado com sucesso para <login_name>.');
+INSERT INTO Mensagens VALUES(7014, 'Arquivo <arq_name> verificado (integridade e autenticidade) com sucesso para <login_name>.');
+INSERT INTO Mensagens VALUES(7015, 'Falha na decriptação do arquivo <arq_name> para <login_name>.');
+INSERT INTO Mensagens VALUES(7016, 'Falha na verificação (integridade e autenticidade) do arquivo <arq_name> para <login_name>.');
 
--- Saída do sistema
-INSERT INTO Mensagens VALUES(9001, 'Tela de saída apresentada para <login_name>.');
-INSERT INTO Mensagens VALUES(9002, 'Botão encerrar sessão pressionado por <login_name>.');
-INSERT INTO Mensagens VALUES(9003, 'Botão encerrar sistema pressionado por <login_name>.');
-INSERT INTO Mensagens VALUES(9004, 'Botão voltar de sair para o menu principal pressionado por <login_name>.');
-
+-- Tela de saída
+INSERT INTO Mensagens VALUES(8001, 'Tela de saída apresentada para <login_name>.');
+INSERT INTO Mensagens VALUES(8002, 'Botão encerrar sessão pressionado por <login_name>.');
+INSERT INTO Mensagens VALUES(8003, 'Botão encerrar sistema pressionado por <login_name>.');
+INSERT INTO Mensagens VALUES(8004, 'Botão voltar de sair para o menu principal pressionado por <login_name>.');

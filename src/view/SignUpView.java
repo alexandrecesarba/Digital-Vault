@@ -28,6 +28,8 @@ import java.security.cert.X509Certificate;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 
@@ -36,18 +38,14 @@ public class SignUpView extends JFrame {
     private final DBManager   db;
 
     // —————————— TEST VALUES ——————————
-    private static final String TEST_NAME       = "Administrador";
-    private static final String TEST_EMAIL      = "admin@inf1416.puc-rio.br";
     private static final String TEST_CRT_PATH   =
-        "C:\\Users\\Usuário\\Documents\\PUC-Rio\\INF1416\\Trabalho3\\Pacote-T4\\Keys\\admin-x509.crt";
+        "C:\\Users\\enric\\Workspace\\Faculdade\\SecInf\\Trabalho3\\Pacote-T4\\Keys\\admin-x509.crt";
     private static final String TEST_KEY_PATH   =
-        "C:\\Users\\Usuário\\Documents\\PUC-Rio\\INF1416\\Trabalho3\\Pacote-T4\\Keys\\admin-pkcs8-aes.key";
+        "C:\\Users\\enric\\Workspace\\Faculdade\\SecInf\\Trabalho3\\Pacote-T4\\Keys\\admin-pkcs8-aes.key";
     private static final String TEST_PASSPHRASE = "admin";
     private static final String TEST_PASSWORD   = "12345678";
     // ————————————————————————————————
 
-    private JTextField        nomeField;
-    private JTextField        emailField;
     private JLabel            certLabel;
     private JButton           certButton;
     private JLabel            keyLabel;
@@ -61,8 +59,6 @@ public class SignUpView extends JFrame {
         this.authService = authService;
         this.db          = db;
         initComponents();
-        // log da tela de cadastro (6001)
-        try { db.insertRegistro(6001, null, null); } catch(SQLException e){ e.printStackTrace(); }
     }
 
     private void initComponents() {
@@ -78,22 +74,6 @@ public class SignUpView extends JFrame {
         gbc.weightx   = 0;
 
         int y = 0;
-
-        // Nome completo
-        gbc.gridx=0; gbc.gridy=y; gbc.gridwidth=1;
-        formPanel.add(new JLabel("Nome completo:"), gbc);
-        nomeField = new JTextField(TEST_NAME);
-        gbc.gridx=1; gbc.gridy=y; gbc.gridwidth=2; gbc.weightx=1.0;
-        formPanel.add(nomeField, gbc);
-        y++;
-
-        // E-mail
-        gbc.gridx=0; gbc.gridy=y; gbc.gridwidth=1; gbc.weightx=0;
-        formPanel.add(new JLabel("E-mail:"), gbc);
-        emailField = new JTextField(TEST_EMAIL);
-        gbc.gridx=1; gbc.gridy=y; gbc.gridwidth=2; gbc.weightx=1.0;
-        formPanel.add(emailField, gbc);
-        y++;
 
         // Certificado (.crt)
         gbc.gridx=0; gbc.gridy=y; gbc.gridwidth=1; gbc.weightx=0;
@@ -186,8 +166,6 @@ public class SignUpView extends JFrame {
     }
 
     private void onCadastrar() {
-        String nome    = nomeField.getText().trim();
-        String email   = emailField.getText().trim();
         String crtPath = certLabel.getText();
         String keyPath = keyLabel.getText();
         String frase   = new String(passphraseField.getPassword());
@@ -196,12 +174,9 @@ public class SignUpView extends JFrame {
         String grupo   = (String)groupCombo.getSelectedItem();
 
         // 1) validações básicas
-        if (nome.isEmpty()
-         || !email.matches("[\\w.%-]+@[\\w.-]+\\.[A-Za-z]{2,6}")
-         || crtPath.isEmpty()
-         || keyPath.isEmpty()) {
+        if (crtPath.isEmpty() || keyPath.isEmpty() || frase.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                "Preencha nome, e-mail e escolha os arquivos .crt e .key.",
+                "Certificado, chave privada e frase secreta são obrigatórios.",
                 "Dados incompletos", JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -246,6 +221,113 @@ public class SignUpView extends JFrame {
             return;
         }
 
+       // Mostra tela de confirmação de dados:
+       confirmData(cert);
+    }
+
+    private void confirmData(X509Certificate cert){
+        JFrame confirmFrame = new JFrame();
+        confirmFrame.setTitle("Cofre Digital - Confirme os dados do certificado");
+        confirmFrame.setDefaultCloseOperation(EXIT_ON_CLOSE);
+        confirmFrame.setResizable(false);
+        
+        // Cria os componentes da tela
+        JPanel confirmPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets    = new Insets(5,5,5,5);
+        gbc.fill      = GridBagConstraints.HORIZONTAL;
+        gbc.anchor    = GridBagConstraints.WEST;
+        gbc.weightx   = 0;
+        
+        int y = 0;
+        
+        // Versão do certificado
+        gbc.gridy=y;
+        confirmPanel.add(new JLabel("Versão: " + cert.getVersion()), gbc);
+        y++;
+        
+        // Série do certificado
+        gbc.gridy=y;
+        confirmPanel.add(new JLabel("Série: " + cert.getSerialNumber()), gbc);
+        y++;
+        
+        // Validade do certificado
+        gbc.gridy=y;
+        confirmPanel.add(new JLabel("Validade de: " + cert.getNotBefore() + " até " + cert.getNotAfter()), gbc);
+        y++;
+        
+        // Tipo de assinatura do certificado
+        gbc.gridy=y;
+        confirmPanel.add(new JLabel("Tipo de Assinatura: " + cert.getSigAlgName()), gbc);
+        y++;
+        
+        // Emissor do certificado
+        gbc.gridy=y;
+        confirmPanel.add(new JLabel("Emissor: " + cert.getIssuerX500Principal().toString()), gbc);
+        y++;
+        
+        // Lógica para extrair o e-mail e o nome do sujeito
+        String dnString = cert.getSubjectX500Principal().toString();
+        
+        // Padrões para extrair o email e o nome
+        Pattern emailPattern = Pattern.compile("EMAILADDRESS=([^,]+)");
+        Pattern namePattern = Pattern.compile("CN=([^,]+)");
+        
+        // Matchers para encontrar os padrões na string
+        Matcher emailMatcher = emailPattern.matcher(dnString);
+        Matcher nameMatcher = namePattern.matcher(dnString);
+        
+        // Extrair os valores
+        String emailValue = emailMatcher.find() ? emailMatcher.group(1) : "";
+        String nameValue = nameMatcher.find() ? nameMatcher.group(1) : "";
+        
+        // Sujeito
+        gbc.gridy=y;
+        confirmPanel.add(new JLabel("Sujeito: " + nameValue), gbc);
+        y++;
+        
+        // E-mail
+        gbc.gridy=y;
+        confirmPanel.add(new JLabel("E-mail: " + emailValue), gbc);
+        y++;
+        
+        // Botões
+        JPanel buttons = new JPanel();
+        
+        JButton confirmButton    = new JButton("Confirmar dados");
+        confirmButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        buttons.add(confirmButton);
+        
+        JButton cancelButton = new JButton("Cancelar");
+        cancelButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        buttons.add(cancelButton);
+        
+        gbc.gridx = 0; gbc.gridy = y;
+        gbc.gridheight = 3;
+        gbc.gridwidth = 1; gbc.fill = GridBagConstraints.NONE;
+        confirmPanel.add(buttons, gbc);
+        
+        // Eventos
+        confirmButton.addActionListener(e -> onConfirm(nameValue, emailValue, confirmFrame));
+        cancelButton.addActionListener(e -> onCancel(confirmFrame));
+        
+        confirmFrame.add(confirmPanel);
+        confirmFrame.pack();
+        confirmFrame.setLocationRelativeTo(null);
+        confirmFrame.setVisible(true);
+    }
+    
+    private void onConfirm(String nome, String email, JFrame confirmFrame) {
+        // Grava log de confirmação (6008)
+        try {db.insertRegistro(6008, 1, null); } catch(SQLException ex2){} // uid é 1 já que é o admin
+
+        confirmFrame.dispose();
+
+        String crtPath = certLabel.getText();
+        String keyPath = keyLabel.getText();
+        String senha   = new String(pwdField.getPassword());
+        String grupoNovo   = (String)groupCombo.getSelectedItem();
+
         // 4) gera e criptografa TOTP
         String base32;
         byte[] encTotp;
@@ -270,82 +352,90 @@ public class SignUpView extends JFrame {
                 "Falha", JOptionPane.ERROR_MESSAGE);
             return;
         }
-
+        
         // 5) persiste no banco
         try {
-            int gid = db.getOrCreateGroup(grupo);
+            int gid = db.getOrCreateGroup(grupoNovo);
             String senhaHash = Auth.hashPassword(senha);
             boolean ok = db.addUsuario(nome, email, gid, senhaHash, encTotp, 0);
             if (!ok) throw new SQLException("Falha ao inserir usuário");
-
+            
             User u = db.findUserByEmail(email);
             int uid = u.getUid();
             String pem = Files.readAllLines(Paths.get(crtPath))
-                             .stream().collect(Collectors.joining("\n"))
-                             .replace("'", "''");
+            .stream().collect(Collectors.joining("\n"))
+            .replace("'", "''");
             byte[] rawKey = Files.readAllBytes(Paths.get(keyPath));
             byte[] encKey = Auth.encryptPrivateKey(rawKey);
             int kid = db.addChaveiro(uid, pem, encKey);
-
+            
             try (Connection conn = DBManager.connect();
-                 PreparedStatement p = conn.prepareStatement(
-                     "UPDATE Usuarios SET kid = ? WHERE uid = ?")) {
-                p.setInt(1, kid);
-                p.setInt(2, uid);
-                p.executeUpdate();
-            }
-
-            db.insertRegistro(6008, uid, null); // registro errado?
-
-            // 6) mostra QR Code
-            showTOTPSetupQR(nome, email, base32);
-
-            dispose();
-            new LoginView(authService, db);
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this,
-               "Erro ao gravar dados: " + ex.getMessage(),
-               "Falha", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void showTOTPSetupQR(String nome, String email, String secret) {
-        String issuer = "CofreDigital";
-        String label  = issuer + ":" + email;
-        String uri    = String.format(
-            "otpauth://totp/%s?secret=%s&issuer=%s",
-            label, secret, issuer
-        );
-
-        try {
-            int size = 250;
-            QRCodeWriter writer = new QRCodeWriter();
-            BitMatrix matrix = writer.encode(uri, BarcodeFormat.QR_CODE, size, size);
-            BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
-            for (int x=0; x<size; x++) {
-                for (int y=0; y<size; y++) {
-                    img.setRGB(x, y, matrix.get(x, y) ? Color.BLACK.getRGB() : Color.WHITE.getRGB());
+            PreparedStatement p = conn.prepareStatement(
+                "UPDATE Usuarios SET kid = ? WHERE uid = ?")) {
+                    p.setInt(1, kid);
+                    p.setInt(2, uid);
+                    p.executeUpdate();
                 }
+                
+                // 6) mostra QR Code
+                showTOTPSetupQR(nome, email, base32);
+                
+                dispose();
+                // Recria a tela principal
+                new LoginView(authService, db);
+                
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this,
+                "Erro ao gravar dados: " + ex.getMessage(),
+                "Falha", JOptionPane.ERROR_MESSAGE);
             }
-            JLabel pic = new JLabel(new ImageIcon(img));
-            JOptionPane.showMessageDialog(
-                this,
-                new Object[]{
-                    "<html>Cadastro realizado com sucesso!<br/>",
-                    "Escaneie este QR Code no Google Authenticator:</html>",
-                    pic
-                },
-                "Configure seu Authenticator",
-                JOptionPane.PLAIN_MESSAGE
-            );
-        } catch (WriterException e) {
-            JOptionPane.showMessageDialog(
-                this,
-                "Não foi possível gerar o QR Code: " + e.getMessage(),
-                "Erro", JOptionPane.ERROR_MESSAGE
-            );
         }
-    }
+        
+        private void onCancel(JFrame confirmFrame) {
+            // Grava log de rejeição (6009)
+            try { db.insertRegistro(6009, 1, null); } catch(SQLException ex2){} // uid é 1 já que é o admin
+            confirmFrame.dispose();
+            JOptionPane.showMessageDialog(this,
+            "Cadastro cancelado: Dados não conferem.",
+            "Aviso", JOptionPane.ERROR_MESSAGE);
+        }
+        
+        private void showTOTPSetupQR(String nome, String email, String secret) {
+            String issuer = "CofreDigital";
+            String label  = issuer + ":" + email;
+            String uri    = String.format(
+                "otpauth://totp/%s?secret=%s&issuer=%s",
+                label, secret, issuer
+            );
+    
+            try {
+                int size = 250;
+                QRCodeWriter writer = new QRCodeWriter();
+                BitMatrix matrix = writer.encode(uri, BarcodeFormat.QR_CODE, size, size);
+                BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_RGB);
+                for (int x=0; x<size; x++) {
+                    for (int y=0; y<size; y++) {
+                        img.setRGB(x, y, matrix.get(x, y) ? Color.BLACK.getRGB() : Color.WHITE.getRGB());
+                    }
+                }
+                JLabel pic = new JLabel(new ImageIcon(img));
+                JOptionPane.showMessageDialog(
+                    this,
+                    new Object[]{
+                        "<html>Cadastro realizado com sucesso!<br/>",
+                        "Escaneie este QR Code no Google Authenticator:</html>",
+                        pic
+                    },
+                    "Configure seu Authenticator",
+                    JOptionPane.PLAIN_MESSAGE
+                );
+            } catch (WriterException e) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Não foi possível gerar o QR Code: " + e.getMessage(),
+                    "Erro", JOptionPane.ERROR_MESSAGE
+                );
+            }
+        }
 }

@@ -250,6 +250,12 @@ public class UserSignUpView extends JFrame {
         String confirm = new String(pwdConfirmField.getPassword());
 
         // 1) validações básicas
+        if (crtPath.isEmpty() || keyPath.isEmpty() || frase.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                "Certificado, chave privada e frase secreta são obrigatórios.",
+                "Dados incompletos", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         if (!senha.matches("\\d{8,10}") || !senha.equals(confirm)
          || senha.chars().distinct().count()==1) {
             JOptionPane.showMessageDialog(this,

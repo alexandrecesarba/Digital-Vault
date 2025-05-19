@@ -460,11 +460,6 @@ public class DBManager {
         return 0;
     }
 
-    // ──────────────────────────────────────────────────────────────────────────
-    //  adicionar outros métodos públicos conforme necessidade:
-    //     • atualizar senha (`UPDATE Usuarios SET senha_hash = ? WHERE uid = ?`)
-    //     • carregar/atualizar TOTP key, etc.
-    // ──────────────────────────────────────────────────────────────────────────
     
 }
 

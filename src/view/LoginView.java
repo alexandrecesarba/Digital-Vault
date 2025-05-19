@@ -1,3 +1,5 @@
+// Alexandre (2010292) e Enrico (2110927)
+
 package view;
 
 import db.DBManager;
@@ -106,6 +108,7 @@ public class LoginView extends JFrame {
     // 4) Chegou aqui: login OK → agora sim currentUser está preenchido
     int uid = authService.getCurrentUser().getUid();
     try {
+       db.insertRegistro(2002, null, null);
         db.insertRegistro(2003, uid, null);
         dispose();
         new PasswordView(authService, db);

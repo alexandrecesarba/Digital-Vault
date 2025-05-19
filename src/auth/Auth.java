@@ -1,7 +1,7 @@
+// Alexandre (2010292) e Enrico (2110927)
 package auth;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,20 +19,11 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import main.java.util.Node;
 import org.bouncycastle.crypto.generators.OpenBSDBCrypt;
-import javax.crypto.EncryptedPrivateKeyInfo;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
 import javax.crypto.KeyGenerator;
-import java.security.NoSuchAlgorithmException;
-
 
 public class Auth {
-
-    private static final byte[] APP_MASTER_KEY = 
-        "0123456789ABCDEF0123456789ABCDEF".getBytes(StandardCharsets.UTF_8);
 
     // 1. HASH DE SENHA: Bcrypt 2y custo=8 via BouncyCastle
     public static String hashPassword(String plainPassword) throws Exception {
@@ -63,6 +54,12 @@ public class Auth {
     
     // 3. CARREGAMENTO E DECRIPTOGRAFIA DA CHAVE PRIVADA (AES-256/ECB/PKCS5Padding)
     public static PrivateKey loadPrivateKey(String passphrase, Path keyPath) throws Exception {
+        // Lê bytes do arquivo .key
+        byte[] encryptedFileBytes = Files.readAllBytes(keyPath);
+        return getPrivateKey(passphrase, encryptedFileBytes);
+    }
+
+    public static PrivateKey getPrivateKey(String passphrase, byte[] key) throws Exception{
         // 1) Deriva chave AES-256 a partir da passphrase
         SecureRandom prng = SecureRandom.getInstance("SHA1PRNG", "SUN"); // Especificar o provider para consistência
         prng.setSeed(passphrase.getBytes(StandardCharsets.UTF_8));
@@ -76,10 +73,9 @@ public class Auth {
         Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);
 
-        // 3) Lê bytes do arquivo .key e aplica decriptografia AES
+        // 3) Aplica decriptografia AES
         // O resultado esperado é o conteúdo PEM da chave como bytes
-        byte[] encryptedFileBytes = Files.readAllBytes(keyPath);
-        byte[] decryptedPemBytes = cipher.doFinal(encryptedFileBytes);
+        byte[] decryptedPemBytes = cipher.doFinal(key);
 
         // 4) Converte os bytes decriptografados para uma string PEM
         //    e remove os delimitadores PEM e todos os espaços em branco/quebras de linha.
@@ -167,12 +163,12 @@ public class Auth {
     
 
     // criptografa o conteúdo da sua chave privada (PKCS#8 bytes) → byte[]
-    public static byte[] encryptPrivateKey(byte[] privateKeyBytes) throws Exception {
-        SecretKeySpec keySpec = new SecretKeySpec(APP_MASTER_KEY, "AES");
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, keySpec);
-        return cipher.doFinal(privateKeyBytes);
-    }
+    // public static byte[] encryptPrivateKey(byte[] privateKeyBytes) throws Exception {
+    //     SecretKeySpec keySpec = new SecretKeySpec(APP_MASTER_KEY, "AES");
+    //     Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+    //     cipher.init(Cipher.ENCRYPT_MODE, keySpec);
+    //     return cipher.doFinal(privateKeyBytes);
+    // }
 
     /**
      * Varre a árvore de escolhas e testa cada caminho
@@ -219,4 +215,48 @@ public class Auth {
         if (left != null) return left;
         return dfsRecover(node.dir, candidate, userHash);
     }
+
+public static byte[] decryptEnvelope(byte[] encryptedEnvelope, PrivateKey privateKey) throws Exception {
+    // Initialize RSA cipher in PKCS1 padding mode
+    Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+    cipher.init(Cipher.DECRYPT_MODE, privateKey);
+
+    // Decrypt the envelope to get the PRNG seed
+    byte[] seed = cipher.doFinal(encryptedEnvelope);
+
+    return seed;
+}
+
+public static byte[] decryptFile(byte[] seed, byte[] encryptedData) throws Exception {
+    // Initialize PRNG with provided seed
+    SecureRandom prng = SecureRandom.getInstance("SHA1PRNG");
+    prng.setSeed(seed);
+
+    // Generate AES key from PRNG
+    KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+    keyGen.init(256, prng);
+    SecretKey aesKey = keyGen.generateKey();
+
+    // Initialize AES cipher for decryption
+    Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+    cipher.init(Cipher.DECRYPT_MODE, aesKey);
+
+    // Decrypt the data
+    return cipher.doFinal(encryptedData);
+}
+
+public static boolean verifySignature(byte[] text, byte[] signature, X509Certificate certificate) throws Exception {
+    // Initialize RSA-SHA1 signature verifier
+    Signature verifier = Signature.getInstance("SHA1withRSA");
+    verifier.initVerify(certificate.getPublicKey());
+    
+    // Update with the text to verify
+    verifier.update(text);
+    
+    // Verify the signature
+    return verifier.verify(signature);
+}
+
+
+
 }

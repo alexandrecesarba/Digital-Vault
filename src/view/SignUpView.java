@@ -1,3 +1,5 @@
+// Alexandre (2010292) e Enrico (2110927)
+
 package view;
 
 import auth.Auth;
@@ -204,20 +206,27 @@ public class SignUpView extends JFrame {
 
         // 3) carrega e testa chave privada
         try {
+            if (!keyPath.endsWith(".key")) {
+                JOptionPane.showMessageDialog(this,
+                    "Caminho inválido para a .key.",
+                    "Erro no .key", JOptionPane.ERROR_MESSAGE);
+                try { db.insertRegistro(6005, null, null); } catch(SQLException ex2){}
+                return;
+}
             var priv = Auth.loadPrivateKey(frase, Paths.get(keyPath));
             if (!Auth.testPrivateKey(priv, cert)) {
                 JOptionPane.showMessageDialog(this,
                     "Chave privada ou frase inválida.",
                     "Erro no .key", JOptionPane.ERROR_MESSAGE);
-                db.insertRegistro(6007, null, null);    // registro errado?
+                db.insertRegistro(6006, null, null);    // registro errado?
                 return;
             }
-            authService.setAdminPrivateKey(priv);
+            authService.setAdminPassphrase(frase);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                 "Erro ao carregar/verificar chave: " + ex.getMessage(),
                 "Erro no .key", JOptionPane.ERROR_MESSAGE);
-            try { db.insertRegistro(6006, null, null); } catch(SQLException ex2){}  // registro errado?
+            try { db.insertRegistro(6007, null, null); } catch(SQLException ex2){}  // registro errado?
             return;
         }
 
@@ -366,8 +375,8 @@ public class SignUpView extends JFrame {
             .stream().collect(Collectors.joining("\n"))
             .replace("'", "''");
             byte[] rawKey = Files.readAllBytes(Paths.get(keyPath));
-            byte[] encKey = Auth.encryptPrivateKey(rawKey);
-            int kid = db.addChaveiro(uid, pem, encKey);
+            // byte[] encKey = Auth.encryptPrivateKey(rawKey); Desnecessário a pk já está vindo encriptada
+            int kid = db.addChaveiro(uid, pem, rawKey);
             
             try (Connection conn = DBManager.connect();
             PreparedStatement p = conn.prepareStatement(

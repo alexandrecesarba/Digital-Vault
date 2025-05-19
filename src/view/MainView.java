@@ -1,3 +1,5 @@
+// Alexandre (2010292) e Enrico (2110927)
+
 package view;
 
 import controller.AuthService;
@@ -30,7 +32,7 @@ public class MainView extends  JFrame {
 
         initComponents();
 
-        // log da tela de cadastro (5001)
+        // log da tela principal (5001)
         try { db.insertRegistro(5001, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
     }
 
@@ -143,12 +145,14 @@ public class MainView extends  JFrame {
         try { db.insertRegistro(5003, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
         dispose();
         // Chama a tela de consulta
+        new ConsultView(authService, db, grupo);
     }
 
     private void onExit() {
         // Grava log de saída (5004)
         try { db.insertRegistro(5004, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
         dispose();
+        // Chama a tela de saída
         new ExitView(authService, db);
     }
 

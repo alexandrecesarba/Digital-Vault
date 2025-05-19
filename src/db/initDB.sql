@@ -1,3 +1,4 @@
+-- Alexandre (2010292) e Enrico (2110927)
 -- --------------------------------------------------
 -- Remove quaisquer versões antigas  
 -- --------------------------------------------------
@@ -82,7 +83,6 @@ INSERT INTO Mensagens VALUES(2005, 'Login name <login_name> não identificado.')
 INSERT INTO Mensagens VALUES(3001, 'Autenticação etapa 2 iniciada para <login_name>.');
 INSERT INTO Mensagens VALUES(3002, 'Autenticação etapa 2 encerrada para <login_name>.');
 INSERT INTO Mensagens VALUES(3003, 'Senha pessoal verificada positivamente para <login_name>.');
--- INSERT INTO Mensagens VALUES(3004, 'Senha pessoal verificada negativamente para <login_name>.');
 INSERT INTO Mensagens VALUES(3004, 'Primeiro erro da senha pessoal contabilizado para <login_name>.');
 INSERT INTO Mensagens VALUES(3005, 'Segundo erro da senha pessoal contabilizado para <login_name>.');
 INSERT INTO Mensagens VALUES(3006, 'Terceiro erro da senha pessoal contabilizado para <login_name>.');

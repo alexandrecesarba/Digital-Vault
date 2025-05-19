@@ -1,3 +1,5 @@
+// Alexandre (2010292) e Enrico (2110927)
+
 package view;
 
 import java.sql.Connection;
@@ -288,7 +290,6 @@ public class UserSignUpView extends JFrame {
                 db.insertRegistro(6007, null, null);
                 return;
             }
-            authService.setAdminPrivateKey(priv);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this,
                 "Erro ao carregar/verificar chave: " + ex.getMessage(),
@@ -444,8 +445,8 @@ public class UserSignUpView extends JFrame {
             .stream().collect(Collectors.joining("\n"))
             .replace("'", "''");
             byte[] rawKey = Files.readAllBytes(Paths.get(keyPath));
-            byte[] encKey = Auth.encryptPrivateKey(rawKey);
-            int kid = db.addChaveiro(uid, pem, encKey);
+            // byte[] encKey = Auth.encryptPrivateKey(rawKey); Desnecessário a pk já está vindo encriptada
+            int kid = db.addChaveiro(uid, pem, rawKey);
             
             try (Connection conn = DBManager.connect();
             PreparedStatement p = conn.prepareStatement(

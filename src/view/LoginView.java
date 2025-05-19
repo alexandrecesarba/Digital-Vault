@@ -82,9 +82,7 @@ public class LoginView extends JFrame {
         // 2) Tenta login
     boolean ok;
     try {
-        System.out.println("[LoginView] stage antes do submitLogin: " + authService.getStage());
         ok = authService.submitLogin(email);
-        System.out.println("[LoginView] submitLogin retornou: " + ok + ", stage agora: " + authService.getStage());
     } catch (RuntimeException ex) {
         // conta bloqueada → MID=2004
         JOptionPane.showMessageDialog(this,

@@ -227,7 +227,6 @@ public class ConsultView extends JFrame {
     private void onList(){
         // Grava log de Listar (7003)
         try { db.insertRegistro(7003, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
-        System.out.println("lista");
 
         // Limpa a tabela existente
         tableModel.setRowCount(0);
@@ -384,8 +383,6 @@ public class ConsultView extends JFrame {
     }
 
     private void onItemSelected(String nomeCod, String nomeSec, String dono){
-        System.out.println("Nome Código: " + nomeCod);
-
         try { db.insertRegistro(7010, authService.getCurrentUser().getUid(), nomeCod); } catch(SQLException ex){}
 
         if (authService.getCurrentUser().getEmail().equalsIgnoreCase(dono)){ // Acesso permitido para o arquivo
@@ -400,6 +397,9 @@ public class ConsultView extends JFrame {
 
             try (FileOutputStream stream = new FileOutputStream(nomeSec)) {
                 stream.write(fileBytes);
+                JOptionPane.showMessageDialog(this,
+                    "Arquivo decriptado e salvo com sucesso.",
+                    "Arquivo Salvo", JOptionPane.INFORMATION_MESSAGE);
             } catch (IOException e) {
                 
             }
@@ -453,11 +453,13 @@ public class ConsultView extends JFrame {
 
         } catch (Exception e){
             try { db.insertRegistro(7015, authService.getCurrentUser().getUid(), null); } catch(SQLException ex){}
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Erro durante a decriptação do arquivo. Cheque a sua palavra secreta.",
+                "Erro", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+        
             return null;
         }
-    
-        
     
 
     }

@@ -1,3 +1,5 @@
+// Alexandre (2010292) e Enrico (2110927)
+
 package main.java.util;
 
 import db.DBManager;

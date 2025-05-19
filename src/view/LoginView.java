@@ -1,3 +1,5 @@
+// Alexandre (2010292) e Enrico (2110927)
+
 package view;
 
 import db.DBManager;
@@ -80,9 +82,7 @@ public class LoginView extends JFrame {
         // 2) Tenta login
     boolean ok;
     try {
-        System.out.println("[LoginView] stage antes do submitLogin: " + authService.getStage());
         ok = authService.submitLogin(email);
-        System.out.println("[LoginView] submitLogin retornou: " + ok + ", stage agora: " + authService.getStage());
     } catch (RuntimeException ex) {
         // conta bloqueada → MID=2004
         JOptionPane.showMessageDialog(this,
@@ -106,6 +106,7 @@ public class LoginView extends JFrame {
     // 4) Chegou aqui: login OK → agora sim currentUser está preenchido
     int uid = authService.getCurrentUser().getUid();
     try {
+       db.insertRegistro(2002, null, null);
         db.insertRegistro(2003, uid, null);
         dispose();
         new PasswordView(authService, db);

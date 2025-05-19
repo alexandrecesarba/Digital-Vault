@@ -1,3 +1,5 @@
+// Alexandre (2010292) e Enrico (2110927)
+
 package view;
 
 import controller.AuthService;
@@ -93,6 +95,7 @@ public class TOTPView extends JFrame {
                     null, "Autenticação completa!", 
                     "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                 // inicia tela principal do Cofre
+                try { db.insertRegistro(1003, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
                 new MainView(authService, db);
             } else {
                 // 3b) erro: contabiliza e verifica bloqueio

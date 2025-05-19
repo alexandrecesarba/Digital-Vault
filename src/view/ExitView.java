@@ -1,7 +1,16 @@
+// Alexandre (2010292) e Enrico (2110927)
+
 package view;
 
+import controller.AuthService;
+import db.DBManager;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.sql.SQLException;
-
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -9,18 +18,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-
-import controller.AuthService;
-import db.DBManager;
 import model.User;
-
-import java.awt.BorderLayout;
-
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 
 public class ExitView extends JFrame {
     private final DBManager   db;
@@ -34,8 +32,8 @@ public class ExitView extends JFrame {
 
         initComponents();
 
-        // log da tela de cadastro (5001)
-        try { db.insertRegistro(9001, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
+        // log da tela de cadastro (8001)
+        try { db.insertRegistro(8001, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
     }
     
     private void initComponents(){
@@ -136,20 +134,24 @@ public class ExitView extends JFrame {
     }
 
     private void onCloseSession() {
-        try { db.insertRegistro(9002, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
+        try { db.insertRegistro(8002, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
+        try { db.insertRegistro(1004, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
+
         dispose();
         // Volta para a tela de login    
         new LoginView(authService, db);
     }
     private void onCloseSystem() {
-        try { db.insertRegistro(9003, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
+        try { db.insertRegistro(8003, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
+        try { db.insertRegistro(1002, null, null); } catch(SQLException e){ e.printStackTrace(); }
+
         dispose();
         // Encerra o sistema
         System.exit(0);
     }
 
     private void onBack() {
-        try { db.insertRegistro(9004, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
+        try { db.insertRegistro(8004, authService.getCurrentUser().getUid(), null); } catch(SQLException e){ e.printStackTrace(); }
         dispose();
         // Volta para a tela principal
         new MainView(authService, db);

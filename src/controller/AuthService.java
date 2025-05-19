@@ -1,14 +1,12 @@
+// Alexandre (2010292) e Enrico (2110927)
 package controller;
-import model.User;
-
-import java.sql.SQLException;
-import java.util.Date;
-import java.util.List;
-import main.java.util.Node;
-import java.security.PrivateKey;
-
 import auth.Auth;
 import db.DBManager;
+import java.security.PrivateKey;
+import java.sql.SQLException;
+import java.util.Date;
+import main.java.util.Node;
+import model.User;
 
 
 public class AuthService {
@@ -18,7 +16,7 @@ public class AuthService {
     public enum Stage { LOGIN, PASSWORD, TOTP }
 
     // Armazena em memória a chave privada do administrador
-    private PrivateKey adminPrivateKey;
+    private String adminPassphrase;
 
     // Estado corrente de cada sessão de login
     private Stage stage = Stage.LOGIN;
@@ -96,9 +94,9 @@ public class AuthService {
 
     public int getPwdErrorCount() {
         return this.pwdErrorCount;
-      }
+    }
 
-      public void incrementaPwdError() {
+    public void incrementaPwdError() {
         pwdErrorCount++;
         if (pwdErrorCount >= 3) {
             blockedUntil = System.currentTimeMillis() + lockDurationMs;
@@ -110,11 +108,13 @@ public class AuthService {
         return this.totpErrorCount;
     }
 
-        /** Define a chave privada do administrador (cadastro inicial). */
-        public void setAdminPrivateKey(PrivateKey key) {
-            this.adminPrivateKey = key;
-        }
+    /** Define a chave privada do administrador (cadastro inicial). */
+    public void setAdminPassphrase(String passphrase) {
+        this.adminPassphrase = passphrase;
+    }
     
-    
+    public String getAdminPassphrase() {
+        return this.adminPassphrase;
+    }
       
 }

@@ -1,3 +1,4 @@
+// Alexandre (2010292) e Enrico (2110927)
 package db;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -5,23 +6,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.ResultSetMetaData;
-import java.sql.Statement;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import model.User;
-import auth.Auth;
 import java.sql.Types;
 import java.util.Map;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
-import java.util.Arrays;
-import javax.print.attribute.standard.MediaSize;
 
 public class DBManager {
     private static final String DB_URL = "jdbc:sqlite:cofre.db";
@@ -388,6 +383,80 @@ public class DBManager {
             }
         }
 
+        return 0;
+    }
+
+    public int getUserConsultNum(int uid) throws SQLException {
+        String sql = """
+            SELECT COUNT(r.rid) AS num_rids
+            FROM Registros r
+            WHERE r.uid = ? AND r.mid = 7010
+        """;
+
+        try (Connection c = connect();
+             PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, uid);
+            try (ResultSet rs = p.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("num_rids");
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    public byte[] getChavePrivada(int uid) throws SQLException {
+        String sql = """
+            SELECT chave_privada
+            FROM Chaveiro
+            WHERE uid = ?
+        """;
+        try (Connection c = connect();
+             PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, uid);
+            try (ResultSet rs = p.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBytes("chave_privada");
+                }
+            }
+        }
+        return null;
+    }
+
+    public String getChaveiroCertificado(int kid) throws SQLException {
+        String sql = """
+            SELECT certificado
+            FROM Chaveiro
+            WHERE kid =?
+        """;
+        try (Connection c = connect();
+            PreparedStatement p = c.prepareStatement(sql)) {
+                p.setInt(1, kid);
+                try (ResultSet rs = p.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getString("certificado");
+                    }
+                }
+            }
+        return null;
+    }
+
+    public int getKidFromUid(int uid) throws SQLException {
+        String sql = """
+            SELECT kid
+            FROM Chaveiro
+            WHERE uid =?
+        """;
+        try (Connection c = connect();
+            PreparedStatement p = c.prepareStatement(sql)) {
+                p.setInt(1, uid);
+                try (ResultSet rs = p.executeQuery()) {
+                    if (rs.next()) {
+                        return rs.getInt("kid");
+                    }
+                }
+            }
         return 0;
     }
 

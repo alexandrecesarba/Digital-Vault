@@ -39,15 +39,6 @@ public class SignUpView extends JFrame {
     private final AuthService authService;
     private final DBManager   db;
 
-    // —————————— TEST VALUES ——————————
-    private static final String TEST_CRT_PATH   =
-        "C:\\Users\\enric\\Workspace\\Faculdade\\SecInf\\Trabalho3\\Pacote-T4\\Keys\\admin-x509.crt";
-    private static final String TEST_KEY_PATH   =
-        "C:\\Users\\enric\\Workspace\\Faculdade\\SecInf\\Trabalho3\\Pacote-T4\\Keys\\admin-pkcs8-aes.key";
-    private static final String TEST_PASSPHRASE = "admin";
-    private static final String TEST_PASSWORD   = "12345678";
-    // ————————————————————————————————
-
     private JLabel            certLabel;
     private JButton           certButton;
     private JLabel            keyLabel;
@@ -80,7 +71,7 @@ public class SignUpView extends JFrame {
         // Certificado (.crt)
         gbc.gridx=0; gbc.gridy=y; gbc.gridwidth=1; gbc.weightx=0;
         formPanel.add(new JLabel("Certificado (.crt):"), gbc);
-        certLabel = new JLabel(TEST_CRT_PATH);
+        certLabel = new JLabel();
         gbc.gridx=1; gbc.gridy=y; gbc.gridwidth=1; gbc.weightx=1.0;
         formPanel.add(certLabel, gbc);
         certButton = new JButton("Escolher…");
@@ -98,7 +89,7 @@ public class SignUpView extends JFrame {
         // Chave privada (.key)
         gbc.gridx=0; gbc.gridy=y; gbc.gridwidth=1;
         formPanel.add(new JLabel("Chave privada (.key):"), gbc);
-        keyLabel = new JLabel(TEST_KEY_PATH);
+        keyLabel = new JLabel();
         gbc.gridx=1; gbc.gridy=y; gbc.gridwidth=1; gbc.weightx=1.0;
         formPanel.add(keyLabel, gbc);
         keyButton = new JButton("Escolher…");
@@ -116,7 +107,7 @@ public class SignUpView extends JFrame {
         // Frase secreta
         gbc.gridx=0; gbc.gridy=y; gbc.gridwidth=1; gbc.weightx=0;
         formPanel.add(new JLabel("Frase secreta (p/ chave):"), gbc);
-        passphraseField = new JPasswordField(TEST_PASSPHRASE);
+        passphraseField = new JPasswordField();
         gbc.gridx=1; gbc.gridy=y; gbc.gridwidth=2; gbc.weightx=1.0;
         formPanel.add(passphraseField, gbc);
         y++;
@@ -132,7 +123,7 @@ public class SignUpView extends JFrame {
         // Senha pessoal
         gbc.gridx=0; gbc.gridy=y; gbc.gridwidth=1; gbc.weightx=0;
         formPanel.add(new JLabel("Senha pessoal (8–10 dígitos):"), gbc);
-        pwdField = new JPasswordField(TEST_PASSWORD);
+        pwdField = new JPasswordField();
         gbc.gridx=1; gbc.gridy=y; gbc.gridwidth=2; gbc.weightx=1.0;
         formPanel.add(pwdField, gbc);
         y++;
@@ -140,7 +131,7 @@ public class SignUpView extends JFrame {
         // Confirmação de senha
         gbc.gridx=0; gbc.gridy=y; gbc.gridwidth=1; gbc.weightx=0;
         formPanel.add(new JLabel("Confirme a senha:"), gbc);
-        pwdConfirmField = new JPasswordField(TEST_PASSWORD);
+        pwdConfirmField = new JPasswordField();
         gbc.gridx=1; gbc.gridy=y; gbc.gridwidth=2; gbc.weightx=1.0;
         formPanel.add(pwdConfirmField, gbc);
         y++;
